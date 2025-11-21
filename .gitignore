@@ -1,0 +1,25 @@
+# Arquivos compilados pelo Maven
+/target/
+
+# Arquivos de Log
+*.log
+
+# Arquivos do Eclipse
+.project
+.classpath
+.settings/
+
+# Arquivos do IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Arquivos do VS Code
+.vscode/
+
+# Arquivos do Mac
+.DS_Store
+
+# Arquivos do Wrapper do Maven
+.mvn/
