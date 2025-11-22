@@ -1,7 +1,7 @@
 package com.escolinha.futebol.controller;
 
+import com.escolinha.futebol.dto.MatriculaMinDTO;
 import com.escolinha.futebol.dto.MatriculaRequestDTO;
-import com.escolinha.futebol.dto.MatriculaResponseDTO;
 import com.escolinha.futebol.model.Matricula;
 import com.escolinha.futebol.service.MatriculaService;
 import jakarta.validation.Valid;
@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/matriculas")
@@ -20,12 +19,8 @@ public class MatriculaController {
 
     private final MatriculaService matriculaService;
 
-    /**
-     * Endpoint: POST /api/matriculas
-     * Realiza uma nova matrícula NORMAL (fluxo principal).
-     */
     @PostMapping
-    public ResponseEntity<MatriculaResponseDTO> realizarMatricula(
+    public ResponseEntity<MatriculaMinDTO> realizarMatricula(
             @RequestBody @Valid MatriculaRequestDTO requestDTO) {
 
         Matricula novaMatricula = matriculaService.realizarMatricula(
@@ -35,61 +30,26 @@ public class MatriculaController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(MatriculaResponseDTO.fromEntity(novaMatricula));
+                .body(MatriculaMinDTO.fromEntity(novaMatricula));
     }
 
-    /**
-     * Endpoint: POST /api/matriculas/automatico
-     * Usado automaticamente ao criar turmas — NÃO lança erro por duplicidade.
-     */
-    @PostMapping("/automatico")
-    public ResponseEntity<MatriculaResponseDTO> matricularAutomatico(
-            @RequestBody @Valid MatriculaRequestDTO requestDTO) {
-
-        Matricula matricula = matriculaService.matricularAutomatico(
-                requestDTO.alunoId(),
-                requestDTO.turmaId()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(MatriculaResponseDTO.fromEntity(matricula));
-    }
-
-    /**
-     * Endpoint: GET /api/matriculas
-     * Lista matrículas com filtros opcionais por aluno ou turma.
-     */
     @GetMapping
-    public ResponseEntity<List<MatriculaResponseDTO>> listarMatriculas(
+    public ResponseEntity<List<MatriculaMinDTO>> listarMatriculas(
             @RequestParam(required = false) Long alunoId,
-            @RequestParam(required = false) Long turmaId
-    ) {
-        List<Matricula> matriculas;
+            @RequestParam(required = false) Long turmaId) {
 
-        if (alunoId != null) {
-            matriculas = matriculaService.listarPorAluno(alunoId);
-        } else if (turmaId != null) {
-            matriculas = matriculaService.listarPorTurma(turmaId);
-        } else {
-            matriculas = matriculaService.listarTodas();
-        }
+        List<Matricula> matriculas = matriculaService.listar(alunoId, turmaId);
 
-        List<MatriculaResponseDTO> resposta = matriculas.stream()
-                .map(MatriculaResponseDTO::fromEntity)
-                .collect(Collectors.toList());
+        List<MatriculaMinDTO> respostaDTOs = matriculas.stream()
+                .map(MatriculaMinDTO::fromEntity)
+                .toList();
 
-        return ResponseEntity.ok(resposta);
+        return ResponseEntity.ok(respostaDTOs);
     }
 
-    /**
-     * Endpoint: PUT /api/matriculas/{id}/trancar
-     * Tranca uma matrícula (status = TRANCADA).
-     */
     @PutMapping("/{id}/trancar")
-    public ResponseEntity<MatriculaResponseDTO> trancarMatricula(@PathVariable Long id) {
+    public ResponseEntity<MatriculaMinDTO> trancarMatricula(@PathVariable Long id) {
         Matricula matriculaTrancada = matriculaService.trancarMatricula(id);
-
-        return ResponseEntity.ok(MatriculaResponseDTO.fromEntity(matriculaTrancada));
+        return ResponseEntity.ok(MatriculaMinDTO.fromEntity(matriculaTrancada));
     }
 }

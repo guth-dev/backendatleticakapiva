@@ -23,14 +23,6 @@ public class MatriculaService {
     private final AlunoService alunoService;
     private final TurmaService turmaService;
 
-    /**
-     * Método usado pela TurmaController ao criar uma turma com alunos já inclusos.
-     */
-    @Transactional
-    public Matricula matricularAutomatico(Long alunoId, Long turmaId) {
-        return realizarMatricula(alunoId, turmaId);
-    }
-
     @Transactional
     public Matricula realizarMatricula(Long alunoId, Long turmaId) {
 
@@ -38,66 +30,65 @@ public class MatriculaService {
         Turma turma = turmaService.buscarPorId(turmaId);
 
         if (!aluno.getAtivo()) {
-            throw new RegraNegocioException("O aluno " + aluno.getNome() + " está inativo e não pode ser matriculado.");
+            throw new RegraNegocioException("O aluno está inativo e não pode ser matriculado.");
         }
 
-        Optional<Matricula> matriculaExistente = matriculaRepository
+        Optional<Matricula> existente = matriculaRepository
                 .findByAlunoIdAndTurmaIdAndStatus(alunoId, turmaId, StatusMatricula.ATIVA);
 
-        if (matriculaExistente.isPresent()) {
-            throw new RegraNegocioException("O aluno já possui uma matrícula ativa nesta turma.");
+        if (existente.isPresent()) {
+            throw new RegraNegocioException("O aluno já possui matrícula ativa nesta turma.");
         }
 
         if (turma.getLimiteAlunos() != null && turma.getLimiteAlunos() > 0) {
-            Long matriculasAtivas = matriculaRepository.countByTurmaIdAndStatus(turmaId, StatusMatricula.ATIVA);
+            long ativos = matriculaRepository.countByTurmaIdAndStatus(turmaId, StatusMatricula.ATIVA);
 
-            if (matriculasAtivas >= turma.getLimiteAlunos()) {
-                throw new RegraNegocioException("A turma " + turma.getNome() + " está lotada.");
+            if (ativos >= turma.getLimiteAlunos()) {
+                throw new RegraNegocioException("A turma está lotada.");
             }
         }
 
-        int idadeAluno = Period.between(aluno.getDataNascimento(), LocalDate.now()).getYears();
+        int idade = Period.between(aluno.getDataNascimento(), LocalDate.now()).getYears();
 
-        if (turma.getFaixaEtariaMinima() != null && idadeAluno < turma.getFaixaEtariaMinima()) {
-            throw new RegraNegocioException("O aluno (idade " + idadeAluno + ") não atende a idade mínima da turma (" + turma.getFaixaEtariaMinima() + ").");
+        if (turma.getFaixaEtariaMinima() != null && idade < turma.getFaixaEtariaMinima()) {
+            throw new RegraNegocioException("O aluno não atende a idade mínima da turma.");
         }
 
-        if (turma.getFaixaEtariaMaxima() != null && idadeAluno > turma.getFaixaEtariaMaxima()) {
-            throw new RegraNegocioException("O aluno (idade " + idadeAluno + ") excede a idade máxima da turma (" + turma.getFaixaEtariaMaxima() + ").");
+        if (turma.getFaixaEtariaMaxima() != null && idade > turma.getFaixaEtariaMaxima()) {
+            throw new RegraNegocioException("O aluno excede a idade máxima da turma.");
         }
 
-        Matricula novaMatricula = new Matricula();
-        novaMatricula.setAluno(aluno);
-        novaMatricula.setTurma(turma);
-        novaMatricula.setDataMatricula(LocalDate.now());
-        novaMatricula.setStatus(StatusMatricula.ATIVA);
+        Matricula nova = new Matricula();
+        nova.setAluno(aluno);
+        nova.setTurma(turma);
+        nova.setDataMatricula(LocalDate.now());
+        nova.setStatus(StatusMatricula.ATIVA);
 
-        return matriculaRepository.save(novaMatricula);
+        return matriculaRepository.save(nova);
     }
 
     @Transactional
     public Matricula trancarMatricula(Long matriculaId) {
         Matricula matricula = matriculaRepository.findById(matriculaId)
-                .orElseThrow(() -> new RegraNegocioException("Matrícula não encontrada com o ID: " + matriculaId));
+                .orElseThrow(() -> new RegraNegocioException("Matrícula não encontrada."));
 
         matricula.setStatus(StatusMatricula.TRANCADA);
+        matricula.setDataFim(LocalDate.now());
+
         return matriculaRepository.save(matricula);
     }
 
     @Transactional(readOnly = true)
-    public List<Matricula> listarTodas() {
+    public List<Matricula> listar(Long alunoId, Long turmaId) {
+
+        if (alunoId != null) {
+            return matriculaRepository.findByAlunoId(alunoId);
+        }
+
+        if (turmaId != null) {
+            return matriculaRepository.findByTurmaId(turmaId);
+        }
+
         return matriculaRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Matricula> listarPorAluno(Long alunoId) {
-        alunoService.buscarPorId(alunoId);
-        return matriculaRepository.findByAlunoId(alunoId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Matricula> listarPorTurma(Long turmaId) {
-        turmaService.buscarPorId(turmaId);
-        return matriculaRepository.findByTurmaId(turmaId);
     }
 }

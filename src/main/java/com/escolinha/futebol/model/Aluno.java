@@ -4,53 +4,51 @@ import jakarta.validation.constraints.Email;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.Generated;
 import java.util.List;
-
 import java.time.LocalDate;
 
-@Entity // classe é uma entidade JPA
-@Data // anotação lombok  gera getters, setters, toString, equals e hashCode
+@Entity
+@Data
 @Table(name = "alunos")
 public class Aluno {
 
-    // Dados do Aluno
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Configura a geração automática de ID
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Código automático: ANO + sequencial (ex: 2025-0001)
+    @Column(nullable = false, unique = true, length = 9)
+    private String codigoAluno;
 
     @Column(nullable = false)
     private String nome;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private LocalDate dataNascimento;
 
-    // Dados do responsavel
-
-    @Column (nullable = false)
+    // Dados do responsável
+    @Column(nullable = false)
     private String nomeResponsavel;
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     @Size(min = 11, max = 11, message = "O CPF deve ter 11 dígitos.")
     private String cpfResponsavel;
 
     // Contato
     @Email(message = "O formato do e-mail é inválido.")
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String emailResponsavel;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String telefoneResponsavel;
 
+    @Column(nullable = false)
+    private LocalDate dataMatricula = LocalDate.now();
 
     @Column(nullable = false)
-    private LocalDate dataMatricula = LocalDate.now(); // padrao dataAtual
+    private Boolean ativo = true;
 
-    @Column(nullable = false)
-    private Boolean ativo = true; // Aluno com matrícula ativa por padrão
-
-    // Relacionamento com Matricula (OneToMany)
+    // Relacionamento com Matricula
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL)
     private List<Matricula> matriculas;
 }

@@ -1,69 +1,84 @@
 package com.escolinha.futebol.service;
 
 import com.escolinha.futebol.model.Aluno;
+import com.escolinha.futebol.model.Matricula;
+import com.escolinha.futebol.model.enums.StatusMatricula;
 import com.escolinha.futebol.repository.AlunoRepository;
+import com.escolinha.futebol.repository.MatriculaRepository;
 import com.escolinha.futebol.service.exceptions.RegraNegocioException;
-import lombok.RequiredArgsConstructor; // Import do Lombok
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Service // 1. Marca a classe como um Serviço do Spring
-@RequiredArgsConstructor // 2. (Lombok) Cria um construtor com campos 'final'
+@Service
+@RequiredArgsConstructor
 public class AlunoService {
 
-    // 3. Injeção de Dependência: O Service precisa do Repository
     private final AlunoRepository alunoRepository;
+    private final MatriculaRepository matriculaRepository; // Adicionado
 
     /**
-     * Método para criar um novo aluno.
-     * REGRA: Não permite CPF de responsável duplicado.
+     * Criar aluno com validação de CPF
+     * + geração de código de matrícula (ANO + sequencial)
+     * + criação automática de matrícula inicial
      */
-    @Transactional // 4. Garante que a operação é atômica (ou salva tudo, ou nada)
+    @Transactional
     public Aluno criarAluno(Aluno aluno) {
-        // 5. REGRA DE NEGÓCIO:
-        // Busca no banco se já existe um aluno com este CPF
-        Optional<Aluno> alunoExistente = alunoRepository.findByCpfResponsavel(aluno.getCpfResponsavel());
 
+        // Verificar CPF duplicado
+        Optional<Aluno> alunoExistente = alunoRepository.findByCpfResponsavel(aluno.getCpfResponsavel());
         if (alunoExistente.isPresent()) {
-            // Se existir, lança nossa exceção customizada
             throw new RegraNegocioException("CPF de responsável já cadastrado.");
         }
 
-        // Se a regra passar, salva o aluno no banco
-        return alunoRepository.save(aluno);
+        // Gerar código do aluno (ANO + sequencial → 2025-0001)
+        String codigoGerado = gerarCodigoAluno();
+        aluno.setCodigoAluno(codigoGerado);
+
+        // Salvar aluno
+        Aluno alunoSalvo = alunoRepository.save(aluno);
+
+        // Criar matrícula inicial automaticamente
+        Matricula matricula = new Matricula();
+        matricula.setAluno(alunoSalvo);
+        matricula.setDataMatricula(LocalDate.now());
+        matricula.setStatus(StatusMatricula.ATIVA);
+
+        matriculaRepository.save(matricula); // Salva a matrícula
+
+        return alunoSalvo;
     }
 
-    /**
-     * Busca todos os alunos.
-     */
-    @Transactional(readOnly = true) // Otimiza a transação para apenas leitura
+    @Transactional(readOnly = true)
     public List<Aluno> listarTodos() {
         return alunoRepository.findAll();
     }
 
-    /**
-     * Busca um aluno pelo ID.
-     * REGRA: Lança exceção se não encontrar.
-     */
     @Transactional(readOnly = true)
     public Aluno buscarPorId(Long id) {
         return alunoRepository.findById(id)
                 .orElseThrow(() -> new RegraNegocioException("Aluno não encontrado com o ID: " + id));
     }
 
-    /**
-     * Atualiza os dados de um aluno existente.
-     */
     @Transactional
     public Aluno atualizarAluno(Long id, Aluno alunoAtualizado) {
-        // 1. Busca o aluno (o método buscarPorId já valida se ele existe)
+
         Aluno alunoExistente = buscarPorId(id);
 
-        // 2. Atualiza os dados do objeto existente
-        // (Não permitimos alterar CPF ou data de matrícula por aqui)
+        // Validação de CPF ao atualizar
+        if (!alunoExistente.getCpfResponsavel().equals(alunoAtualizado.getCpfResponsavel())) {
+            alunoRepository.findByCpfResponsavel(alunoAtualizado.getCpfResponsavel())
+                    .ifPresent(outroAluno -> {
+                        throw new RegraNegocioException("CPF já cadastrado para outro aluno.");
+                    });
+            alunoExistente.setCpfResponsavel(alunoAtualizado.getCpfResponsavel());
+        }
+
+        // Atualização normal dos dados
         alunoExistente.setNome(alunoAtualizado.getNome());
         alunoExistente.setDataNascimento(alunoAtualizado.getDataNascimento());
         alunoExistente.setNomeResponsavel(alunoAtualizado.getNomeResponsavel());
@@ -71,17 +86,31 @@ public class AlunoService {
         alunoExistente.setEmailResponsavel(alunoAtualizado.getEmailResponsavel());
         alunoExistente.setAtivo(alunoAtualizado.getAtivo());
 
-        // 3. Salva (o JPA entende que é um UPDATE, pois o 'alunoExistente' tem ID)
         return alunoRepository.save(alunoExistente);
     }
 
-    /**
-     * Desativa um aluno (Soft Delete).
-     */
     @Transactional
     public void desativarAluno(Long id) {
         Aluno aluno = buscarPorId(id);
         aluno.setAtivo(false);
         alunoRepository.save(aluno);
+    }
+
+    /**
+     * Gera código ANO + sequencial (2025-0001)
+     */
+    private String gerarCodigoAluno() {
+        String ano = String.valueOf(LocalDate.now().getYear());
+
+        // Buscar a última matrícula daquele ano
+        String ultima = alunoRepository.buscarUltimaMatriculaDoAno(ano);
+
+        int sequencial = 1;
+        if (ultima != null) {
+            String[] partes = ultima.split("-");
+            sequencial = Integer.parseInt(partes[1]) + 1;
+        }
+
+        return ano + "-" + String.format("%04d", sequencial);
     }
 }

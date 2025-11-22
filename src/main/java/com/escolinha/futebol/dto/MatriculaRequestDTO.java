@@ -8,5 +8,4 @@ public record MatriculaRequestDTO(
 
         @NotNull(message = "O ID da turma é obrigatório.")
         Long turmaId
-) {
-}
+) { }

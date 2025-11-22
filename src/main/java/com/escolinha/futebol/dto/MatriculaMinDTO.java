@@ -6,7 +6,7 @@ public record MatriculaMinDTO(
         Long id,
         String dataMatricula,
         String status,
-        Long alunoId,
+        String codigoAluno,   // Substitui alunoId
         String alunoNome
 ) {
     public static MatriculaMinDTO fromEntity(Matricula m) {
@@ -14,9 +14,8 @@ public record MatriculaMinDTO(
                 m.getId(),
                 m.getDataMatricula().toString(),
                 m.getStatus().name(),
-                m.getAluno().getId(),
+                m.getAluno().getCodigoAluno(), // pega o código do aluno
                 m.getAluno().getNome()
         );
     }
 }
-
