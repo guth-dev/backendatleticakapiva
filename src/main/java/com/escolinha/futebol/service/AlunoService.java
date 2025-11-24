@@ -113,4 +113,13 @@ public class AlunoService {
 
         return ano + "-" + String.format("%04d", sequencial);
     }
+
+    // ------------------------------
+    // NOVO MÉTODO: Buscar aluno pelo CÓDIGO
+    // ------------------------------
+    @Transactional(readOnly = true)
+    public Aluno buscarPorCodigo(String codigoAluno) {
+        return alunoRepository.findByCodigoAluno(codigoAluno)
+                .orElseThrow(() -> new RegraNegocioException("Aluno não encontrado ou código inválido"));
+    }
 }

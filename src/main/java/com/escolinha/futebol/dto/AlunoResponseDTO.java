@@ -4,10 +4,9 @@ import com.escolinha.futebol.model.Aluno;
 
 import java.time.LocalDate;
 
-// Este DTO TEM ID e os campos controlados pelo servidor.
 public record AlunoResponseDTO(
         Long id,
-        String codigoAluno,      // <--- ADICIONADO
+        String codigoAluno,
         String nome,
         LocalDate dataNascimento,
         String nomeResponsavel,
@@ -17,13 +16,10 @@ public record AlunoResponseDTO(
         LocalDate dataMatricula,
         Boolean ativo
 ) {
-    /**
-     * Converte a Entidade Aluno para este DTO.
-     */
     public static AlunoResponseDTO fromEntity(Aluno aluno) {
         return new AlunoResponseDTO(
                 aluno.getId(),
-                aluno.getCodigoAluno(),      // <--- NOVO CAMPO
+                aluno.getCodigoAluno(),
                 aluno.getNome(),
                 aluno.getDataNascimento(),
                 aluno.getNomeResponsavel(),

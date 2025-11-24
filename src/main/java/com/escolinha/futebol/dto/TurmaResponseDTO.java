@@ -1,8 +1,6 @@
 package com.escolinha.futebol.dto;
 
 import com.escolinha.futebol.model.Turma;
-
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,12 +9,9 @@ public record TurmaResponseDTO(
         String nome,
         Integer faixaEtariaMinima,
         Integer faixaEtariaMaxima,
-        String diaSemana,
-        LocalTime horarioInicio,
-        LocalTime horarioFim,
         Integer limiteAlunos,
         ProfessorMinDTO professor,
-        List<MatriculaMinDTO> matriculas // <-- ADICIONADO
+        List<MatriculaMinDTO> matriculas
 ) {
     public static TurmaResponseDTO fromEntity(Turma turma) {
         return new TurmaResponseDTO(
@@ -24,9 +19,6 @@ public record TurmaResponseDTO(
                 turma.getNome(),
                 turma.getFaixaEtariaMinima(),
                 turma.getFaixaEtariaMaxima(),
-                turma.getDiaSemana(),
-                turma.getHorarioInicio(),
-                turma.getHorarioFim(),
                 turma.getLimiteAlunos(),
                 ProfessorMinDTO.fromEntity(turma.getProfessor()),
                 turma.getMatriculas() == null ? null :

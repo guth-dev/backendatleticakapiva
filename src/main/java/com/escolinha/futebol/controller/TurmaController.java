@@ -22,17 +22,12 @@ public class TurmaController {
     private final TurmaService turmaService;
     private final MatriculaService matriculaService;
 
-    /**
-     * POST - Criar turma com alunos já matriculados automaticamente
-     */
     @PostMapping
     public ResponseEntity<TurmaResponseDTO> criarTurma(
             @RequestBody @Valid TurmaRequestDTO turmaDTO) {
 
-        // 1) Criar turma sem depender do MatriculaService
         Turma turmaSalva = turmaService.criarTurma(turmaDTO);
 
-        // 2) Matricular automaticamente os alunos, se houver
         if (turmaDTO.alunoIds() != null && !turmaDTO.alunoIds().isEmpty()) {
             turmaDTO.alunoIds().forEach(alunoId ->
                     matriculaService.realizarMatricula(alunoId, turmaSalva.getId()));
@@ -43,9 +38,6 @@ public class TurmaController {
                 .body(TurmaResponseDTO.fromEntity(turmaSalva));
     }
 
-    /**
-     * GET - Listar todas as turmas
-     */
     @GetMapping
     public ResponseEntity<List<TurmaResponseDTO>> listarTurmas() {
         List<TurmaResponseDTO> lista = turmaService.listarTodas().stream()
@@ -54,18 +46,12 @@ public class TurmaController {
         return ResponseEntity.ok(lista);
     }
 
-    /**
-     * GET - Buscar turma por ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<TurmaResponseDTO> buscarTurmaPorId(@PathVariable Long id) {
         Turma turma = turmaService.buscarPorId(id);
         return ResponseEntity.ok(TurmaResponseDTO.fromEntity(turma));
     }
 
-    /**
-     * DELETE - Excluir turma
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarTurma(@PathVariable Long id) {
         turmaService.deletarTurma(id);

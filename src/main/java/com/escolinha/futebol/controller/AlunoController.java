@@ -2,8 +2,11 @@ package com.escolinha.futebol.controller;
 
 import com.escolinha.futebol.dto.AlunoRequestDTO;
 import com.escolinha.futebol.dto.AlunoResponseDTO;
+import com.escolinha.futebol.dto.AlunoPainelResponseDTO;
 import com.escolinha.futebol.model.Aluno;
+import com.escolinha.futebol.model.Matricula;
 import com.escolinha.futebol.service.AlunoService;
+import com.escolinha.futebol.service.MatriculaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,8 +22,8 @@ import java.util.stream.Collectors;
 public class AlunoController {
 
     private final AlunoService alunoService;
+    private final MatriculaService matriculaService;
 
-    // --- Converte DTO -> Entidade ---
     private Aluno convertToEntity(AlunoRequestDTO dto) {
         Aluno aluno = new Aluno();
         aluno.setNome(dto.nome());
@@ -29,12 +32,8 @@ public class AlunoController {
         aluno.setCpfResponsavel(dto.cpfResponsavel());
         aluno.setEmailResponsavel(dto.emailResponsavel());
         aluno.setTelefoneResponsavel(dto.telefoneResponsavel());
-
-        // codigoAluno e dataMatricula NÃO são definidos pelo cliente.
         return aluno;
     }
-
-    // --- ENDPOINTS ---
 
     @PostMapping
     public ResponseEntity<AlunoResponseDTO> criarAluno(@RequestBody @Valid AlunoRequestDTO alunoDTO) {
@@ -72,5 +71,33 @@ public class AlunoController {
     public ResponseEntity<Void> desativarAluno(@PathVariable Long id) {
         alunoService.desativarAluno(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // --------------------------
+    //    PAINEL DO ALUNO
+    // --------------------------
+    @GetMapping("/{id}/painel")
+    public ResponseEntity<AlunoPainelResponseDTO> buscarPainelAluno(@PathVariable Long id) {
+
+        // 1. Busca o aluno
+        Aluno aluno = alunoService.buscarPorId(id);
+
+        // 2. Busca a matrícula ativa
+        Matricula matriculaAtiva = matriculaService.buscarMatriculaAtivaPorAluno(id);
+
+        // 3. Converte para DTO
+        AlunoPainelResponseDTO response =
+                AlunoPainelResponseDTO.fromEntity(aluno, matriculaAtiva);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // --------------------------
+    //    NOVO ENDPOINT: Buscar pelo CÓDIGO
+    // --------------------------
+    @GetMapping("/codigo/{codigo}")
+    public ResponseEntity<AlunoResponseDTO> buscarAlunoPorCodigo(@PathVariable String codigo) {
+        Aluno aluno = alunoService.buscarPorCodigo(codigo);
+        return ResponseEntity.ok(AlunoResponseDTO.fromEntity(aluno));
     }
 }

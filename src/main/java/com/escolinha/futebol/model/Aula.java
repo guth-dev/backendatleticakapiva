@@ -1,52 +1,26 @@
 package com.escolinha.futebol.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
+@Data
 public class Aula {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String data;       // Data completa da aula (ex: 2025-01-20)
+    private String horaInicio;
+    private String horaFim;
     private String titulo;
-    private String data;
-    private String hora;
+
+    @ManyToOne
+    @JoinColumn(name = "turma_id")
+    @JsonBackReference // Aula é "filha" da turma, evita loop
+    private Turma turma;
 
     public Aula() {}
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitulo() {
-        return titulo;
-    }
-
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
-
-    public String getData() {
-        return data;
-    }
-
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public String getHora() {
-        return hora;
-    }
-
-    public void setHora(String hora) {
-        this.hora = hora;
-    }
 }

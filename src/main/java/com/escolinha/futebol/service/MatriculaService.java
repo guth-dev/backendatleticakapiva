@@ -91,4 +91,29 @@ public class MatriculaService {
 
         return matriculaRepository.findAll();
     }
+
+    // 🔥 NOVA FUNÇÃO — usada no painel do aluno
+    @Transactional(readOnly = true)
+    public Matricula buscarMatriculaAtivaPorAluno(Long alunoId) {
+
+        return matriculaRepository.findByAlunoIdAndStatus(alunoId, StatusMatricula.ATIVA)
+                .orElseThrow(() ->
+                        new RegraNegocioException("O aluno não possui matrícula ativa."));
+    }
+
+    // 🔥 Já existia — manter como estava
+    @Transactional
+    public Matricula alterarStatus(Long id, StatusMatricula novoStatus) {
+
+        Matricula matricula = matriculaRepository.findById(id)
+                .orElseThrow(() -> new RegraNegocioException("Matrícula não encontrada."));
+
+        matricula.setStatus(novoStatus);
+
+        if (novoStatus == StatusMatricula.ATIVA) {
+            matricula.setDataFim(null);
+        }
+
+        return matriculaRepository.save(matricula);
+    }
 }

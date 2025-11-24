@@ -1,9 +1,11 @@
 package com.escolinha.futebol.model;
 
 import com.escolinha.futebol.model.enums.StatusMatricula;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
+
 
 @Entity
 @Data
@@ -30,5 +32,6 @@ public class Matricula {
     // Agora a turma pode ser nula, para matrículas iniciais sem turma
     @ManyToOne
     @JoinColumn(name = "turma_id")
+    @JsonBackReference    // Matricula é o lado "filho", evita o loop
     private Turma turma;
 }

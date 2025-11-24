@@ -3,6 +3,7 @@ package com.escolinha.futebol.controller;
 import com.escolinha.futebol.dto.MatriculaMinDTO;
 import com.escolinha.futebol.dto.MatriculaRequestDTO;
 import com.escolinha.futebol.model.Matricula;
+import com.escolinha.futebol.model.enums.StatusMatricula;
 import com.escolinha.futebol.service.MatriculaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -51,5 +52,15 @@ public class MatriculaController {
     public ResponseEntity<MatriculaMinDTO> trancarMatricula(@PathVariable Long id) {
         Matricula matriculaTrancada = matriculaService.trancarMatricula(id);
         return ResponseEntity.ok(MatriculaMinDTO.fromEntity(matriculaTrancada));
+    }
+
+    // 🔥 NOVA ROTA: alterar status da matrícula
+    @PutMapping("/{id}/status")
+    public ResponseEntity<MatriculaMinDTO> alterarStatus(
+            @PathVariable Long id,
+            @RequestParam StatusMatricula status) {
+
+        Matricula matriculaAtualizada = matriculaService.alterarStatus(id, status);
+        return ResponseEntity.ok(MatriculaMinDTO.fromEntity(matriculaAtualizada));
     }
 }

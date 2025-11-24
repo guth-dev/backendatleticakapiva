@@ -20,4 +20,9 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long> {
         LIMIT 1
     """, nativeQuery = true)
     String buscarUltimaMatriculaDoAno(String ano);
+
+    // --------------------------
+    // Novo método para buscar por código
+    // --------------------------
+    Optional<Aluno> findByCodigoAluno(String codigoAluno);
 }
